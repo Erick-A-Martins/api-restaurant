@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { AppError } from "@/utils/AppError.js";
 import { db } from "@/database/knex.js";
 import { z } from "zod";
 
@@ -49,9 +50,43 @@ class ProductController {
 
             const { name, price } = bodySchema.parse(request.body);
 
+            const product = await db<ProductRepository>("products")
+                .select()
+                .where({ id })
+                .first();
+
+            if(!product){
+                throw new AppError("product not found");
+            }
+
             await db<ProductRepository>("products")
                 .update({ name, price, updated_at: db.fn.now() })
                 .where({ id });
+
+            return response.json();
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async remove(request: Request, response: Response, next: NextFunction){
+        try {
+            const id = z
+                .string()
+                .transform((value) => Number(value))
+                .refine((value) => !isNaN(value), { message: "id must be a number" })
+                .parse(request.params.id);
+
+            const product = await db<ProductRepository>("products")
+                .select()
+                .where({ id })
+                .first();
+
+            if(!product){
+                throw new AppError("product not found");
+            }
+            
+            await db<ProductRepository>("products").delete().where({ id });
 
             return response.json();
         } catch (error) {
