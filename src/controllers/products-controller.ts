@@ -5,8 +5,13 @@ import { z } from "zod";
 class ProductController {
     async index(request: Request, response: Response, next: NextFunction){
         try {
+            const { name } = request.query;
+            const products = await db<ProductRepository>("products")
+            .select()
+            .whereLike("name", `%${name  ?? ""}%`)
+            .orderBy("name");
             
-            return response.json({ message: "Ok" });
+            return response.json(products);
         } catch(error) {
             next(error);
         }
