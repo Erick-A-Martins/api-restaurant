@@ -43,6 +43,37 @@ class TablesSessionsController {
             next(error)
         }
     }
+
+    async update(request: Request, response: Response, next: NextFunction){
+        try {   
+            const id = z
+                .string()
+                .transform((value) => Number(value))
+                .refine((value) => !isNaN(value), { message: "id must be a number" })
+                .parse(request.params.id);
+
+            const session = await db<TablesSessionsRepository>("tables_sessions")
+                .select()
+                .where({ id })
+                .first();
+
+            if(!session){
+                throw new AppError("session table not found");
+            }
+
+            if(session.closed_at){
+                throw new AppError("this session table is already closed");
+            }
+
+            await db<TablesSessionsRepository>("tables_sessions")
+                .update({ closed_at: db.fn.now() })
+                .where({ id });
+
+            return response.json();
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 export { TablesSessionsController };
