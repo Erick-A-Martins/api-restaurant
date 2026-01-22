@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { AppError } from "@/utils/AppError.js";
+import { db } from "@/database/knex.js";
 import { z } from "zod";
 
 class ProductController {
@@ -21,7 +21,9 @@ class ProductController {
 
             const { name, price } = bodySchema.parse(request.body);
 
-            return response.status(201).json({ name, price });
+            await db<ProductRepository>("products").insert({ name, price });
+
+            return response.status(201).json();
         } catch(error) {
             next(error)
         }
