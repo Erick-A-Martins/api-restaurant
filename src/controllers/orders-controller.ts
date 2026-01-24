@@ -75,6 +75,24 @@ class OrdersController {
             next(error);
         }
     }
+
+    async show(request: Request, response: Response, next: NextFunction){
+        try {
+            const { table_session_id } = request.params;
+
+            const order = await db("orders")
+                .select(
+                    db.raw("COALESCE(SUM(orders.price * orders.quantity), 0) AS total"),
+                    db.raw("COALESCE(SUM(orders.quantity), 0) AS quantity")
+                )
+                .where({ table_session_id })
+                .first();
+
+            return response.json(order);
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 export { OrdersController }
